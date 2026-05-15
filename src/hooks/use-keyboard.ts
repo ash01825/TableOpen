@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef } from "react";
 
 interface KeyboardShortcut {
   key: string;
@@ -6,64 +6,23 @@ interface KeyboardShortcut {
   ctrlKey?: boolean;
   shiftKey?: boolean;
   handler: () => void;
-  /** Prevent default browser behavior */
   preventDefault?: boolean;
 }
 
-interface UseKeyboardOptions {
-  shortcuts: KeyboardShortcut[];
-  /** Element to attach listener to (default: window) */
-  element?: HTMLElement | Window | null;
-  /** Only handle shortcuts when no input/textarea is focused */
-  ignoreInputs?: boolean;
-}
+// Singleton: one persistent capture-phase listener, ref-fed handlers
+// This avoids React's stale-closure issues with recreated callbacks.
+const keyHandlerRef = { current: [] as KeyboardShortcut[] };
+let listenerAttached = false;
 
-function isInputFocused(): boolean {
-  const active = document.activeElement;
-  if (!active) return false;
-  const tag = active.tagName.toLowerCase();
-  if (tag === "input" || tag === "textarea" || tag === "select") return true;
-  if (active.getAttribute("contenteditable") === "true") return true;
-  if (active.closest("[data-monaco-editor]")) return true;
-  return false;
-}
-
-export function useKeyboard({ shortcuts, element = null, ignoreInputs = true }: UseKeyboardOptions) {
-  const handleKeyDown = useCallback(
-    (e: Event) => {
-      const event = e as KeyboardEvent;
-      if (ignoreInputs && isInputFocused()) return;
-
-      for (const shortcut of shortcuts) {
-        const keyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase();
-        const cmdOrCtrl = shortcut.metaKey || shortcut.ctrlKey;
-        const hasModifier = cmdOrCtrl ? (event.metaKey || event.ctrlKey) : true;
-        const shiftMatch = shortcut.shiftKey ? event.shiftKey : !shortcut.shiftKey;
-
-        if (keyMatch && hasModifier && shiftMatch) {
-          if (shortcut.preventDefault !== false) {
-            event.preventDefault();
-            event.stopPropagation();
-          }
-          shortcut.handler();
-          return;
-        }
-      }
-    },
-    [shortcuts, ignoreInputs],
-  );
-
+export function useKeyboard(shortcuts: KeyboardShortcut[]) {
+  // Keep ref updated on every render
   useEffect(() => {
-    const target = element ?? window;
-    // Use capture phase so our handler fires before Monaco/stadium eats the event
-    target.addEventListener("keydown", handleKeyDown, { capture: true });
-    return () => target.removeEventListener("keydown", handleKeyDown, { capture: true });
-  }, [handleKeyDown, element]);
+    keyHandlerRef.current = shortcuts;
+  });
 }
 
 /**
- * Global app keyboard shortcuts.
- * Call this once in the AppShell or top-level component.
+ * Global app keyboard shortcuts. Call once in AppShell.
  */
 export function useAppKeyboardShortcuts(handlers: {
   onCommandPalette?: () => void;
@@ -76,35 +35,75 @@ export function useAppKeyboardShortcuts(handlers: {
   onExport?: () => void;
   onEscape?: () => void;
 }) {
+  // Use refs so we always call the latest handler version
+  const h = useRef(handlers);
+  h.current = handlers;
+
   const shortcuts: KeyboardShortcut[] = [];
 
-  if (handlers.onCommandPalette) {
-    shortcuts.push({ key: "k", metaKey: true, handler: handlers.onCommandPalette });
+  if (h.current.onCommandPalette) {
+    shortcuts.push({ key: "k", metaKey: true, handler: h.current.onCommandPalette });
   }
-  if (handlers.onNewQueryTab) {
-    shortcuts.push({ key: "t", metaKey: true, handler: handlers.onNewQueryTab });
+  if (h.current.onNewQueryTab) {
+    shortcuts.push({ key: "t", metaKey: true, handler: h.current.onNewQueryTab });
   }
-  if (handlers.onCloseQueryTab) {
-    shortcuts.push({ key: "w", metaKey: true, shiftKey: true, handler: handlers.onCloseQueryTab });
+  if (h.current.onCloseQueryTab) {
+    shortcuts.push({ key: "w", metaKey: true, handler: h.current.onCloseQueryTab });
   }
-  if (handlers.onNewConnection) {
-    shortcuts.push({ key: "n", metaKey: true, handler: handlers.onNewConnection });
+  if (h.current.onNewConnection) {
+    shortcuts.push({ key: "n", metaKey: true, handler: h.current.onNewConnection });
   }
-  if (handlers.onExecuteQuery) {
-    shortcuts.push({ key: "Enter", metaKey: true, handler: handlers.onExecuteQuery });
+  if (h.current.onExecuteQuery) {
+    shortcuts.push({ key: "Enter", metaKey: true, handler: h.current.onExecuteQuery });
   }
-  if (handlers.onFocusEditor) {
-    shortcuts.push({ key: "l", metaKey: true, handler: handlers.onFocusEditor });
+  if (h.current.onFocusEditor) {
+    shortcuts.push({ key: "l", metaKey: true, handler: h.current.onFocusEditor });
   }
-  if (handlers.onToggleSidebar) {
-    shortcuts.push({ key: "\\", metaKey: true, handler: handlers.onToggleSidebar });
+  if (h.current.onToggleSidebar) {
+    shortcuts.push({ key: "\\", metaKey: true, handler: h.current.onToggleSidebar });
   }
-  if (handlers.onExport) {
-    shortcuts.push({ key: "e", metaKey: true, shiftKey: true, handler: handlers.onExport });
+  if (h.current.onExport) {
+    shortcuts.push({ key: "e", metaKey: true, shiftKey: true, handler: h.current.onExport });
   }
-  if (handlers.onEscape) {
-    shortcuts.push({ key: "Escape", handler: handlers.onEscape, preventDefault: false });
+  if (h.current.onEscape) {
+    shortcuts.push({ key: "Escape", handler: h.current.onEscape, preventDefault: false });
   }
 
-  useKeyboard({ shortcuts, ignoreInputs: true });
+  useKeyboard(shortcuts);
+}
+
+// ── Persistent capture-phase global listener ──────────────────────────
+
+function handleGlobalKeyDown(e: KeyboardEvent) {
+  const active = document.activeElement;
+  // When Monaco is focused, only allow our specific shortcuts
+  const inMonaco = active?.closest(".monaco-editor");
+  if (inMonaco) {
+    // Monaco handles its own Cmd+Enter — let it through
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) return;
+    // Let other Monaco shortcuts through (Cmd+C, Cmd+V, etc.)
+    if (!e.metaKey && !e.ctrlKey) return;
+  }
+
+  for (const shortcut of keyHandlerRef.current) {
+    const keyMatch = e.key.toLowerCase() === shortcut.key.toLowerCase();
+    const needsMod = shortcut.metaKey || shortcut.ctrlKey;
+    const hasMod = needsMod ? (e.metaKey || e.ctrlKey) : true;
+    const shiftMatch = shortcut.shiftKey ? e.shiftKey : true;
+
+    if (keyMatch && hasMod && shiftMatch) {
+      if (shortcut.preventDefault !== false) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      shortcut.handler();
+      return;
+    }
+  }
+}
+
+// Attach once
+if (typeof window !== "undefined" && !listenerAttached) {
+  window.addEventListener("keydown", handleGlobalKeyDown, { capture: true });
+  listenerAttached = true;
 }

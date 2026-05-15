@@ -29,3 +29,6 @@
 
 # data-integrity
 - Every mutation must be transactional — partial failures must roll back completely. Confidence: 0.70
+
+# tab-numbering
+- Query tab numbers should reuse gaps when intermediate tabs are closed, not always increment from a global counter. Confidence: 0.65

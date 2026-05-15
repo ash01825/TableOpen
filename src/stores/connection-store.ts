@@ -53,17 +53,22 @@ function generateTabId(): string {
   return `qt-${Date.now()}-${tabCounter}`;
 }
 
-function nextQueryNum(): number {
+function nextQueryNum(existingNums: number[]): number {
+  // Reuse the first gap in existing numbers
+  const sorted = [...existingNums].sort((a, b) => a - b);
+  for (let i = 1; i <= sorted.length; i++) {
+    if (!sorted.includes(i)) return i;
+  }
+  // No gap — use the counter
   queryCounter += 1;
-  return queryCounter;
+  return Math.max(queryCounter, sorted.length + 1);
 }
 
-function createInitialQueryTab(num?: number): QueryTab {
+function createInitialQueryTab(existingNums: number[]): QueryTab {
   const id = generateTabId();
-  const n = num ?? nextQueryNum();
   return {
     id,
-    title: `Query ${n}`,
+    title: `Query ${nextQueryNum(existingNums)}`,
     content: "",
     results: null,
     isDirty: false,
@@ -87,7 +92,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     try {
       const info = await commands.connectSqlite({ path, name, group });
       const connectionId = info.id;
-      const initialTab = createInitialQueryTab();
+      const initialTab = createInitialQueryTab([]);
       const connectionTab: ConnectionTab = {
         connectionId,
         connectionInfo: info,
@@ -134,7 +139,10 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     set((state) => {
       const updatedConnections = state.connections.map((conn) => {
         if (conn.connectionId !== connectionId) return conn;
-        const num = nextQueryNum();
+        const num = nextQueryNum(conn.queryTabs.map((t) => {
+          const m = t.title.match(/Query (\d+)/);
+          return m ? parseInt(m[1], 10) : 0;
+        }));
         const newTab: QueryTab = {
           id: generateTabId(),
           title: `Query ${num}`,
@@ -162,8 +170,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
         if (conn.connectionId !== connectionId) return conn;
         const filteredTabs = conn.queryTabs.filter((t) => t.id !== tabId);
         if (filteredTabs.length === 0) {
-          const nextNum = nextQueryNum();
-          const newTab = createInitialQueryTab(nextNum);
+          const newTab = createInitialQueryTab([conn.queryTabs.length]);
           return {
             ...conn,
             queryTabs: [newTab],
