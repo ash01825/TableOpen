@@ -75,16 +75,6 @@ export function useAppKeyboardShortcuts(handlers: {
 // ── Persistent capture-phase global listener ──────────────────────────
 
 function handleGlobalKeyDown(e: KeyboardEvent) {
-  const active = document.activeElement;
-  // When Monaco is focused, only allow our specific shortcuts
-  const inMonaco = active?.closest(".monaco-editor");
-  if (inMonaco) {
-    // Monaco handles its own Cmd+Enter — let it through
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) return;
-    // Let other Monaco shortcuts through (Cmd+C, Cmd+V, etc.)
-    if (!e.metaKey && !e.ctrlKey) return;
-  }
-
   for (const shortcut of keyHandlerRef.current) {
     const keyMatch = e.key.toLowerCase() === shortcut.key.toLowerCase();
     const needsMod = shortcut.metaKey || shortcut.ctrlKey;

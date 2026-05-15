@@ -26,7 +26,7 @@ export async function connectPostgres(args: {
 }
 
 export async function disconnect(args: {
-  connection_id: string;
+  connectionId: string;
 }): Promise<void> {
   return invoke<void>("disconnect", args);
 }
@@ -42,57 +42,57 @@ export async function testConnection(args: {
 }
 
 export async function getTables(args: {
-  connection_id: string;
+  connectionId: string;
 }): Promise<TableInfo[]> {
   return invoke<TableInfo[]>("get_tables", args);
 }
 
 export async function getColumns(args: {
-  connection_id: string;
+  connectionId: string;
   table: string;
 }): Promise<ColumnInfo[]> {
   return invoke<ColumnInfo[]>("get_columns", args);
 }
 
 export async function getPrimaryKeys(args: {
-  connection_id: string;
+  connectionId: string;
   table: string;
 }): Promise<string[]> {
   return invoke<string[]>("get_primary_keys", args);
 }
 
 export async function executeQuery(args: {
-  connection_id: string;
+  connectionId: string;
   sql: string;
 }): Promise<QueryResult> {
   return invoke<QueryResult>("execute_query", args);
 }
 
 export async function cancelQuery(args: {
-  connection_id: string;
+  connectionId: string;
 }): Promise<void> {
   return invoke<void>("cancel_query", args);
 }
 
 export async function updateRow(args: {
-  connection_id: string;
+  connectionId: string;
   table: string;
-  pk_columns: Record<string, CellValue>;
+  pkColumns: Record<string, CellValue>;
   changes: Record<string, CellValue>;
 }): Promise<void> {
   return invoke<void>("update_row", args);
 }
 
 export async function deleteRow(args: {
-  connection_id: string;
+  connectionId: string;
   table: string;
-  pk_columns: Record<string, CellValue>;
+  pkColumns: Record<string, CellValue>;
 }): Promise<void> {
   return invoke<void>("delete_row", args);
 }
 
 export async function insertRow(args: {
-  connection_id: string;
+  connectionId: string;
   table: string;
   values: Record<string, CellValue>;
 }): Promise<void> {
@@ -106,6 +106,12 @@ export async function getHistory(args: {
   return invoke<HistoryEntry[]>("get_history", args);
 }
 
+export async function saveHistory(args: {
+  entry: HistoryEntry;
+}): Promise<void> {
+  return invoke<void>("save_history", args);
+}
+
 export async function searchHistory(args: {
   query: string;
 }): Promise<HistoryEntry[]> {
@@ -113,7 +119,7 @@ export async function searchHistory(args: {
 }
 
 export async function exportCsv(args: {
-  connection_id: string;
+  connectionId: string;
   sql: string;
   path: string;
 }): Promise<void> {

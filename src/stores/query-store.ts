@@ -31,7 +31,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     const tabKey = `${connectionId}:${tabId}`;
     set({ loading: true, error: null });
     try {
-      const result = await commands.executeQuery({ connection_id: connectionId, sql });
+      const result = await commands.executeQuery({ connectionId, sql });
       set((state) => ({
         results: { ...state.results, [tabKey]: result },
         pagination: { ...state.pagination, [tabKey]: { offset: 0, limit: 100 } },
@@ -71,7 +71,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     try {
       const nextOffset = currentPagination.offset + currentPagination.limit;
       const paginatedSql = `${sql} LIMIT ${currentPagination.limit} OFFSET ${nextOffset}`;
-      const result = await commands.executeQuery({ connection_id: connectionId, sql: paginatedSql });
+      const result = await commands.executeQuery({ connectionId, sql: paginatedSql });
       const existingResults = state.results[tabKey];
       if (existingResults && result) {
         const merged: QueryResult = {
