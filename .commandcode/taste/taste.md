@@ -24,5 +24,8 @@
 # code-quality
 - Every component must have complete state coverage: loading, empty, error, and edge cases. Confidence: 0.70
 
+# workflow
+- Do not make unsolicited visual design/style changes. Only fix crashes, bugs, and functional issues unless the user explicitly requests design work. Confidence: 0.65
+
 # data-integrity
 - Every mutation must be transactional — partial failures must roll back completely. Confidence: 0.70
