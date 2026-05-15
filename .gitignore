@@ -29,3 +29,6 @@ npm-debug.log*
 *.db
 *.db-shm
 *.db-wal
+
+# Agent infrastructure (internal development tooling)
+.commandcode/
