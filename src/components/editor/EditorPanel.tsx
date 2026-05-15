@@ -59,7 +59,7 @@ export function EditorPanel() {
 
   if (!activeConnection || !activeTab) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-surface-0">
+      <div className="h-full flex items-center justify-center bg-surface-0">
         <div className="text-center">
           <svg
             className="w-10 h-10 text-text-muted mx-auto mb-3"
@@ -81,15 +81,15 @@ export function EditorPanel() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-surface-0" onKeyDown={handleKeyDown}>
-      {/* Tab bar */}
-      <div className="flex items-center bg-surface-1 border-b border-[var(--color-border)] min-h-0 flex-shrink-0">
-        <div className="flex items-center flex-1 overflow-x-auto">
+    <div className="h-full flex flex-col bg-surface-0" onKeyDown={handleKeyDown}>
+      {/* Tab bar — fixed height */}
+      <div className="flex items-center bg-surface-1 border-b border-[var(--color-border)] flex-shrink-0 h-9">
+        <div className="flex items-center flex-1 overflow-x-auto h-full">
           {activeConnection.queryTabs.map((tab) => (
             <div
               key={tab.id}
               className={`
-                flex items-center gap-1.5 h-9 px-3 text-xs whitespace-nowrap cursor-pointer
+                flex items-center gap-1.5 h-full px-3 text-xs whitespace-nowrap cursor-pointer
                 border-r border-[var(--color-border)]
                 transition-colors select-none
                 ${
@@ -109,7 +109,7 @@ export function EditorPanel() {
                   e.stopPropagation();
                   closeQueryTab(activeConnection.connectionId, tab.id);
                 }}
-                className="ml-1 w-4 h-4 flex items-center justify-center rounded-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors"
+                className="ml-1 w-4 h-4 flex items-center justify-center rounded-sm text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors flex-shrink-0"
                 aria-label="Close tab"
               >
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -121,7 +121,7 @@ export function EditorPanel() {
         </div>
         <button
           onClick={() => addQueryTab(activeConnection.connectionId)}
-          className="flex-shrink-0 w-9 h-9 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+          className="flex-shrink-0 w-9 h-full flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
           title="New query tab (Cmd+T)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -130,8 +130,8 @@ export function EditorPanel() {
         </button>
       </div>
 
-      {/* Monaco Editor */}
-      <div className="flex-1 min-h-0" data-monaco-editor>
+      {/* Monaco Editor — fills remaining space */}
+      <div className="flex-1 min-h-0 relative" data-monaco-editor>
         <Editor
           key={activeTab.id}
           defaultLanguage="sql"
