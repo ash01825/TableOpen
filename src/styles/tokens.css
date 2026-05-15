@@ -53,6 +53,9 @@
 
   --color-overlay: rgba(10, 11, 13, 0.72);
   --color-overlay-light: rgba(10, 11, 13, 0.45);
+
+  --color-null-bg: rgba(255, 255, 255, 0.03);
+  --color-null-text: #555555;
 }
 
 /* --------------------------------------------------------------------------
@@ -105,6 +108,9 @@
 
   --color-overlay: rgba(26, 28, 30, 0.55);
   --color-overlay-light: rgba(26, 28, 30, 0.32);
+
+  --color-null-bg: rgba(0, 0, 0, 0.02);
+  --color-null-text: #aaaaaa;
 }
 
 /* --------------------------------------------------------------------------
@@ -164,4 +170,7 @@
 
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
+
+  --color-null-bg: rgba(255, 255, 255, 0.03);
+  --color-null-text: #555555;
 }
