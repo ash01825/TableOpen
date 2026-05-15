@@ -46,16 +46,24 @@ interface ConnectionState {
 }
 
 let tabCounter = 0;
+let queryCounter = 0;
+
 function generateTabId(): string {
   tabCounter += 1;
   return `qt-${Date.now()}-${tabCounter}`;
 }
 
+function nextQueryNum(): number {
+  queryCounter += 1;
+  return queryCounter;
+}
+
 function createInitialQueryTab(num?: number): QueryTab {
   const id = generateTabId();
+  const n = num ?? nextQueryNum();
   return {
     id,
-    title: `Query ${num ?? 1}`,
+    title: `Query ${n}`,
     content: "",
     results: null,
     isDirty: false,
@@ -79,7 +87,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     try {
       const info = await commands.connectSqlite({ path, name, group });
       const connectionId = info.id;
-      const initialTab = createInitialQueryTab(1);
+      const initialTab = createInitialQueryTab();
       const connectionTab: ConnectionTab = {
         connectionId,
         connectionInfo: info,
@@ -126,7 +134,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     set((state) => {
       const updatedConnections = state.connections.map((conn) => {
         if (conn.connectionId !== connectionId) return conn;
-        const num = conn.queryTabs.length + 1;
+        const num = nextQueryNum();
         const newTab: QueryTab = {
           id: generateTabId(),
           title: `Query ${num}`,
@@ -154,7 +162,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
         if (conn.connectionId !== connectionId) return conn;
         const filteredTabs = conn.queryTabs.filter((t) => t.id !== tabId);
         if (filteredTabs.length === 0) {
-          const nextNum = conn.queryTabs.length + 1;
+          const nextNum = nextQueryNum();
           const newTab = createInitialQueryTab(nextNum);
           return {
             ...conn,

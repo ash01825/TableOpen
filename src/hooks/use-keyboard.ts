@@ -85,7 +85,7 @@ export function useAppKeyboardShortcuts(handlers: {
     shortcuts.push({ key: "t", metaKey: true, handler: handlers.onNewQueryTab });
   }
   if (handlers.onCloseQueryTab) {
-    shortcuts.push({ key: "w", metaKey: true, handler: handlers.onCloseQueryTab });
+    shortcuts.push({ key: "w", metaKey: true, shiftKey: true, handler: handlers.onCloseQueryTab });
   }
   if (handlers.onNewConnection) {
     shortcuts.push({ key: "n", metaKey: true, handler: handlers.onNewConnection });
