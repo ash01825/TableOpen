@@ -51,11 +51,11 @@ function generateTabId(): string {
   return `qt-${Date.now()}-${tabCounter}`;
 }
 
-function createInitialQueryTab(): QueryTab {
+function createInitialQueryTab(num?: number): QueryTab {
   const id = generateTabId();
   return {
     id,
-    title: "Query 1",
+    title: `Query ${num ?? 1}`,
     content: "",
     results: null,
     isDirty: false,
@@ -79,7 +79,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     try {
       const info = await commands.connectSqlite({ path, name, group });
       const connectionId = info.id;
-      const initialTab = createInitialQueryTab();
+      const initialTab = createInitialQueryTab(1);
       const connectionTab: ConnectionTab = {
         connectionId,
         connectionInfo: info,
@@ -154,7 +154,8 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
         if (conn.connectionId !== connectionId) return conn;
         const filteredTabs = conn.queryTabs.filter((t) => t.id !== tabId);
         if (filteredTabs.length === 0) {
-          const newTab = createInitialQueryTab();
+          const nextNum = conn.queryTabs.length + 1;
+          const newTab = createInitialQueryTab(nextNum);
           return {
             ...conn,
             queryTabs: [newTab],
@@ -164,7 +165,11 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
         let newActiveId = conn.activeQueryTabId;
         if (newActiveId === tabId) {
           const idx = conn.queryTabs.findIndex((t) => t.id === tabId);
-          newActiveId = filteredTabs[Math.min(idx, filteredTabs.length - 1)]?.id ?? filteredTabs[0].id;
+          if (idx === 0) {
+            newActiveId = filteredTabs[0]?.id ?? filteredTabs[0].id;
+          } else {
+            newActiveId = filteredTabs[Math.min(idx, filteredTabs.length - 1)]?.id ?? filteredTabs[0].id;
+          }
         }
         return {
           ...conn,
