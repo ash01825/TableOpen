@@ -27,22 +27,20 @@ export function Input({
       )}
       <input
         id={inputId}
-        className={`
-          h-[44px] px-3 text-sm rounded-md
-          bg-surface-1 text-text-primary
-          border
-          placeholder:text-text-muted
-          transition-colors
-          focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
-          disabled:opacity-40 disabled:cursor-not-allowed
-          ${error ? "border-danger" : "border-border hover:border-border-strong"}
-          ${className}
-        `.trim()}
+        className={[
+          "h-11 px-3 text-sm rounded-[var(--radius-md)]",
+          "bg-surface-1 text-text-primary",
+          "border border-border",
+          "placeholder:text-text-muted placeholder:font-normal",
+          "transition-colors duration-150",
+          "focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent focus-visible:border-accent",
+          "disabled:opacity-40 disabled:cursor-not-allowed",
+          error ? "border-danger" : "hover:border-border-strong",
+          className,
+        ].join(" ")}
         {...props}
       />
-      {error && (
-        <p className="text-xs text-danger">{error}</p>
-      )}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }
