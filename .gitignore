@@ -26,3 +26,6 @@ npm-debug.log*
 
 # Test databases (user-specific)
 *.test.db
+*.db
+*.db-shm
+*.db-wal
