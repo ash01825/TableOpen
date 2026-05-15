@@ -12,7 +12,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-accent text-accent-text hover:bg-accent-hover active:bg-accent-active shadow-sm",
+    "bg-accent text-accent-text hover:bg-accent-hover active:bg-accent-active",
   secondary:
     "bg-surface-2 text-text-primary hover:bg-surface-3 active:bg-surface-1 border border-border",
   ghost:
@@ -20,8 +20,8 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-8 px-3 text-xs gap-1.5 rounded-[var(--radius-sm)]",
-  md: "h-11 px-4 text-sm gap-2 rounded-[var(--radius-md)]",
+  sm: "h-8 px-3 text-xs gap-1.5 rounded-sm",
+  md: "h-[44px] px-4 text-sm gap-2 rounded-md",
 };
 
 export function Button({
@@ -35,31 +35,46 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={[
-        "inline-flex items-center justify-center font-medium select-none",
-        "transition-all duration-150 ease-out",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-        "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none",
-        variantClasses[variant],
-        sizeClasses[size],
-        className,
-      ].join(" ")}
+      className={`
+        inline-flex items-center justify-center
+        font-medium
+        transition-colors
+        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
+        disabled:opacity-40 disabled:cursor-not-allowed
+        ${variantClasses[variant]}
+        ${sizeClasses[size]}
+        ${className}
+      `.trim()}
       disabled={disabled || loading}
       {...props}
     >
-      {loading && (
-        <svg
-          className="animate-spin"
-          style={{ width: size === "sm" ? 14 : 16, height: size === "sm" ? 14 : 16 }}
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      )}
+      {loading && <Spinner />}
       {children}
     </button>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="animate-spin h-4 w-4"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
   );
 }
