@@ -1,10 +1,5 @@
 {
   "disabledSkills": [
-    "firecrawl",
-    "firecrawl-crawl",
-    "firecrawl-map",
-    "firecrawl-scrape",
-    "firecrawl-search",
     "minimalist-ui",
     "redesign-existing-projects"
   ]
