@@ -10,7 +10,7 @@ import { useUiStore } from "../../stores/ui-store";
 import { useAppKeyboardShortcuts } from "../../hooks/use-keyboard";
 
 export function AppShell() {
-  const { connections, activeConnectionId, addQueryTab, executeQuery } =
+  const { connections, activeConnectionId, addQueryTab } =
     useConnectionStore();
   const { sidebarOpen, toggleSidebar } = useUiStore();
 
@@ -31,25 +31,33 @@ export function AppShell() {
     }
   }, [activeConnectionId, activeTab]);
 
-  const handleExecuteQuery = useCallback(() => {
-    if (activeConnectionId && activeTab) {
-      executeQuery(activeConnectionId, activeTab.id, activeTab.content);
-    }
-  }, [activeConnectionId, activeTab, executeQuery]);
-
   const handleToggleSidebar = useCallback(() => {
     toggleSidebar();
   }, [toggleSidebar]);
 
+  const handleNewConnection = useCallback(() => {
+    // If there's an active connection, disconnect. If not, do nothing (shown by default)
+    if (connections.length > 0) {
+      useConnectionStore.getState().disconnect(activeConnectionId!);
+    }
+  }, [activeConnectionId, connections.length]);
+
+  const handleFocusEditor = useCallback(() => {
+    // Focus is handled by Monaco's onMount — trigger by clicking the editor area
+    const editorEl = document.querySelector("[data-monaco-editor]") as HTMLElement | null;
+    editorEl?.focus();
+  }, []);
+
   // Register global keyboard shortcuts
+  // Cmd+Enter is NOT registered here — EditorPanel handles it directly
   useAppKeyboardShortcuts({
     onNewQueryTab: handleNewQueryTab,
     onCloseQueryTab: handleCloseQueryTab,
-    onExecuteQuery: handleExecuteQuery,
     onToggleSidebar: handleToggleSidebar,
+    onNewConnection: handleNewConnection,
+    onFocusEditor: handleFocusEditor,
   });
 
-  // If no connections exist, show the connection screen
   if (connections.length === 0) {
     return (
       <div className="h-screen w-screen overflow-hidden bg-surface-0 text-text-primary font-sans">
@@ -61,21 +69,17 @@ export function AppShell() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-surface-0 text-text-primary font-sans">
       <div className="h-full w-full flex flex-col">
-        {/* Toolbar */}
         <ErrorBoundary>
           <Toolbar />
         </ErrorBoundary>
 
-        {/* Main area: sidebar + editor/results */}
         <div className="flex-1 flex min-h-0">
-          {/* Sidebar */}
           {sidebarOpen && (
             <ErrorBoundary>
               <Sidebar />
             </ErrorBoundary>
           )}
 
-          {/* Editor + Results */}
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
             <ErrorBoundary>
               <WorkspaceArea />
@@ -83,7 +87,6 @@ export function AppShell() {
           </div>
         </div>
 
-        {/* Status bar */}
         <ErrorBoundary>
           <StatusBar />
         </ErrorBoundary>
