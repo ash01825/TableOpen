@@ -1,9 +1,17 @@
+import { useEffect } from "react";
+import { AppShell } from "./components/layout/AppShell";
+import { useConnectionStore } from "./stores/connection-store";
+import "./styles/index.css";
+
 function App() {
-  return (
-    <div className="h-screen w-screen bg-surface-0 text-text-primary">
-      <h1>TableOpen</h1>
-    </div>
-  );
+  const { loadSavedConnections } = useConnectionStore();
+
+  // Load saved connections on mount
+  useEffect(() => {
+    loadSavedConnections();
+  }, [loadSavedConnections]);
+
+  return <AppShell />;
 }
 
 export default App;
