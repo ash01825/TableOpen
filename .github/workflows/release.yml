@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-macos-arm64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - run: npm ci
+      - run: npm run tauri build -- --target aarch64-apple-darwin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: src-tauri/target/aarch64-apple-darwin/release/bundle/
+
+  build-macos-x86_64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+      - run: npm ci
+      - run: npm run tauri build -- --target x86_64-apple-darwin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-x86_64
+          path: src-tauri/target/x86_64-apple-darwin/release/bundle/

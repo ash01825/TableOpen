@@ -1,0 +1,24 @@
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  background: var(--color-border-strong) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+  background: var(--color-text-muted) !important;
+}
+
+.monaco-editor .minimap {
+  opacity: 0.45;
+}
+
+.monaco-editor .current-line {
+  border: none !important;
+}
+
+.monaco-editor .selected-text {
+  background: var(--color-accent-muted) !important;
+}
+
+.monaco-editor .cursor {
+  background-color: var(--color-text-primary) !important;
+}

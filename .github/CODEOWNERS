@@ -1,0 +1,6 @@
+src-tauri/       @backend-engineer
+src/             @frontend-engineer
+src/types/       @types-architect
+src/ipc/         @types-architect
+src/styles/      @ui-designer
+src/components/shared/ @ui-designer

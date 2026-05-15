@@ -1,0 +1,42 @@
+{
+  "name": "tableopen",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-shell": "^2",
+    "@monaco-editor/react": "^4.6",
+    "monaco-editor": "^0.50",
+    "react": "^19",
+    "react-dom": "^19",
+    "zustand": "^5",
+    "@tanstack/react-virtual": "^3",
+    "ufuzzy": "^1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4",
+    "typescript": "^5.5",
+    "vite": "^6",
+    "vitest": "^2",
+    "@testing-library/react": "^16",
+    "@testing-library/jest-dom": "^6",
+    "jsdom": "^25",
+    "tailwindcss": "^3",
+    "postcss": "^8",
+    "autoprefixer": "^10"
+  }
+}
