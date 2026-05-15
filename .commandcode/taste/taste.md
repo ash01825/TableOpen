@@ -32,3 +32,6 @@
 
 # tab-numbering
 - Query tab numbers should reuse gaps when intermediate tabs are closed, not always increment from a global counter. Confidence: 0.65
+
+# workflow
+- When the user explicitly says they are in planning/testing/validation mode ("we are here only planning", "just testing if it works"), do not execute any build tasks or dispatch sub-agents. Only answer questions and validate the approach. Confidence: 0.70
