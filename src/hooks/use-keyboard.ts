@@ -55,8 +55,9 @@ export function useKeyboard({ shortcuts, element = null, ignoreInputs = true }: 
 
   useEffect(() => {
     const target = element ?? window;
-    target.addEventListener("keydown", handleKeyDown);
-    return () => target.removeEventListener("keydown", handleKeyDown);
+    // Use capture phase so our handler fires before Monaco/stadium eats the event
+    target.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => target.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, [handleKeyDown, element]);
 }
 

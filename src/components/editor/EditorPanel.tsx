@@ -131,7 +131,7 @@ export function EditorPanel() {
       </div>
 
       {/* Monaco Editor */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0" data-monaco-editor>
         <Editor
           key={activeTab.id}
           defaultLanguage="sql"
