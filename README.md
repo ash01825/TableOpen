@@ -1,71 +1,183 @@
+<div align="center">
+
 # TableOpen
 
-The open-source database GUI that is actually better than the paid tools.
+**The open-source database GUI that ships at TablePlus quality. Free. Forever.**
 
-TablePlus-quality experience. Zero cost. No feature gating. MIT licensed.
-
----
-
-## The problem
-
-Every developer touches a database. The best tool for the job — TablePlus — costs $59 per year per device. DBeaver is free but launches in 5-8 seconds and carries a 2012 Eclipse plugin aesthetic into every interaction. Beekeeper Studio tags itself open-source but its Community Edition deliberately withholds MySQL stored procedures, PostgreSQL view editing, and multi-tab queries to push paid upgrades.
-
-There is no polished, fast, genuinely free database GUI. Developers who can't justify $59/year for a tool they open 20 times a day settle for tools that actively slow them down. This is a solved problem in every other developer tool category. It is not solved for databases.
-
-TableOpen exists because UX quality should not be gated behind a subscription for a tool this fundamental to daily development.
+</div>
 
 ---
 
-## What TableOpen is
+## What is this?
 
-A desktop database GUI built for developers who live in their database. Sub-second cold launch. Premium dark interface. Virtualized result grid that handles 100,000 rows without perceptible lag. NULL values rendered visually distinct from empty strings because confusing the two is a data integrity bug, not a display preference. Editing is transactional with a side-by-side diff before any mutation commits. The command palette gives you fuzzy search over every action in the app. Keyboard shortcuts for everything — you should never need to reach for the mouse.
+TableOpen is a desktop database client. You connect to a database, browse tables, write queries, edit rows, and export results — in a tool that opens instantly and looks like someone cared.
 
-PostgreSQL and SQLite in v1. The constraint is intentional. Every additional database type added early is weeks of driver edge cases, type coercion bugs, and SSL mode variations that quietly destroy the UX quality the project is built around.
+It is built for developers who touch a database every day and are tired of choosing between paying $59/year for something fast and beautiful, or using something free that launched during the Obama administration.
+
+---
+
+## The problem it solves
+
+| Tool | Fast? | Beautiful? | Free? | Open source? |
+|------|-------|-----------|-------|--------------|
+| TablePlus | Yes | Yes | $59/yr | No |
+| Beekeeper Studio | Yes | Yes | Freemium | Partially |
+| DBeaver | No | No | Yes | Yes |
+| pgAdmin | No | No | Yes | Yes |
+| **TableOpen** | **Yes** | **Yes** | **Yes** | **Yes** |
+
+Every row above TableOpen is a compromise. You either pay, or you tolerate a tool that feels bad to use. There is no row where "Fast," "Beautiful," "Free," and "Open Source" all say yes at the same time.
+
+TableOpen is that row.
+
+---
+
+## What makes it different
+
+### Instant launch
+Tauri, not Electron. Cold start under one second on any modern machine. A database GUI that opens slowly has already failed its first interaction.
+
+### Premium design
+Dark-first visual language built with the same attention to detail as Linear and Raycast. Geist typeface. Tinted shadows. One accent color. No generic Tailwind defaults. No purple glows. No AI slop. The bar is "this looks like a paid product" — not "this looks good for open source."
+
+### The grid is the product
+Virtualized rendering at 60fps on 100,000 rows. NULL values are italic, muted, and visually distinct from empty strings — because confusing the two is a data integrity bug, not a display preference. Numbers are right-aligned in tabular format. Booleans are badges. Every data type is handled with intent.
+
+### Safe by default
+Every row edit shows a side-by-side diff before it commits. Mutations are transactional. Primary keys are discovered from the schema, not guessed. If editing production data doesn't feel safe, developers stop using the tool — so the tool makes it feel safe.
+
+### Keyboard-first
+Command palette with fuzzy search over every action. Global keyboard shortcuts. Full grid navigation without touching the mouse. Built for developers who resent reaching for a trackpad.
+
+### Nothing is gated
+MIT licensed. No Community vs Pro edition. No features withheld. No contributor license agreement. Every feature ships to every user.
 
 ---
 
 ## Architecture
 
-Built on Tauri, not Electron. This is the single most important technical decision in the project. Tauri apps cold-start in under a second. Electron apps take three to five. A database GUI that opens slowly already failed its first interaction — no amount of feature depth recovers from that.
+TableOpen is built on four principles: speed, safety, type precision, and visual discipline.
 
-**Backend:** Rust. `tokio-postgres` for PostgreSQL with async connection pooling. `rusqlite` via `r2d2` for SQLite with WAL mode. `ssh2` for SSH tunnel support — production database access is the most important workflow. Every mutation path is transactional. Schema introspection reads primary keys from the database, not from heuristics. Type coercion from `pg_type` to a strict `CellValue` tagged enum means the frontend never guesses what a value is.
+### Rust backend via Tauri
 
-**Frontend:** React 19 with TypeScript strict mode. Zustand for state — six stores covering connections, schema, editor, query execution, history, and UI. Monaco Editor for the SQL workspace with a completion provider that reads the live schema. TanStack Virtual for the result grid — the hardest component in the application, targeting 60fps on 100,000 rows with column sorting, resizing, inline editing, and NULL-aware rendering.
+```
+src-tauri/
+├── src/
+│   ├── commands/     → Thin IPC handlers — deserialize, delegate, serialize
+│   ├── services/     → Business logic — testable without Tauri
+│   ├── db/           → Connection pools (r2d2-sqlite, deadpool-postgres)
+│   └── models/       → Shared types — CellValue, QueryResult, ConnectionInfo
+└── tests/
+    └── integration/  → Service-level tests against real SQLite fixtures
+```
 
-**IPC contract:** Every type crossing the Rust-TypeScript boundary is a tagged discriminated union. `CellValue` is `Null | Text(String) | Integer(i64) | Float(f64) | Bool(bool)` — identical in both languages, verified at compile time. No `any` in the data pipeline. A type mismatch between backend and frontend is a build failure, not a runtime surprise.
+Database drivers are chosen for performance and maturity. `rusqlite` with WAL mode and busy timeout for SQLite. `tokio-postgres` with `deadpool` for async PostgreSQL connections. `ssh2` for SSH tunnel support — because production databases are behind jump hosts and the tool needs to handle that transparently.
 
-**Design system:** Premium dark-first visual language built on CSS custom properties. Geist typeface. Tinted shadows — no pure black, no generic defaults. One accent color. WCAG AA contrast in both themes. Complete state coverage on every component — default, hover, active, focus, disabled, loading, empty, error. The bar is "this looks like a tool people would pay for," not "this looks good for open-source."
+Every mutation path is wrapped in `BEGIN IMMEDIATE` → `COMMIT` with explicit rollback on failure. Schema introspection queries `PRAGMA table_info` on SQLite and `information_schema` on PostgreSQL — primary keys, foreign keys, column types, nullability. No heuristics. No guessing.
+
+### React frontend with strict TypeScript
+
+```
+src/
+├── components/
+│   ├── layout/       → AppShell, Toolbar, Sidebar, StatusBar
+│   ├── connection/   → Connection screen, PostgreSQL form, SQLite picker
+│   ├── editor/       → Monaco editor wrapper with schema autocomplete
+│   ├── grid/         → VirtualGrid, GridCell, InlineEditor, RowDiff
+│   ├── schema/       → Table browser with fuzzy search, column inspector
+│   └── shared/       → Button, Input, Modal, ErrorBoundary, Skeleton
+├── stores/           → Zustand — connection, schema, editor, query, history, UI
+├── ipc/              → Typed invoke wrappers — no `any` anywhere
+└── types/            → TypeScript mirrors of Rust models — exact match, compile-time verified
+```
+
+Six Zustand stores with clear boundaries. The grid uses TanStack Virtual with overscan of 15 rows — the scroll experience stays smooth even as new pages stream in from the backend. Monaco Editor is configured with a completion provider that reads live schema data — after `FROM` you get table names, after `WHERE` you get column names scoped to referenced tables.
+
+Every panel is wrapped in an ErrorBoundary. A grid crash does not kill the editor. An editor crash does not kill the sidebar.
+
+### Typed IPC contract
+
+The `CellValue` type is a tagged discriminated union, identical in Rust and TypeScript:
+
+```rust
+// Rust
+#[serde(tag = "type", content = "value")]
+pub enum CellValue { Null, Text(String), Integer(i64), Float(f64), Bool(bool) }
+```
+
+```typescript
+// TypeScript
+type CellValue = 
+  | { type: "Null" }
+  | { type: "Text"; value: string }
+  | { type: "Integer"; value: number }
+  | { type: "Float"; value: number }
+  | { type: "Bool"; value: boolean };
+```
+
+A type mismatch between backend and frontend is caught at compile time — `cargo check` and `npx tsc --noEmit` both run in CI. No runtime type surprises. No `any` in the data pipeline.
+
+### Design system
+
+CSS custom properties for every visual decision. No hardcoded colors, spacing values, or radii in any component. The design tokens define a complete system across both themes — dark (default) and light — with WCAG AA contrast minimums verified independently.
+
+```
+--color-surface-0 through surface-3   → Background hierarchy
+--color-text-primary/secondary/muted  → Content hierarchy
+--color-accent + hover/active/muted   → One accent, four states
+--color-success/danger/warning/info   → Semantic colors with muted backgrounds
+--color-border/border-strong          → Structural chrome
+--font-sans (Geist) / --font-mono (Geist Mono)
+--space-1 through space-16            → 4px increment scale
+--radius-sm/md/lg/full                → Squircle corners
+--shadow-sm/md/lg                     → Tinted, surface-aware
+```
 
 ---
 
-## What exists now
+## What ships in v1
 
-The full architecture is designed and documented. The project scaffold is built — Tauri configuration, Rust workspace, React application with Vite, Tailwind design system with complete token definitions, typed IPC bridge, Zustand state management, component library, and a fully interactive frontend demo with virtualized grid, command palette, inline editing, and schema browsing.
+- PostgreSQL connection with SSL modes and SSH tunnels
+- SQLite file opening
+- Table browser with fuzzy search across names, columns, and schemas
+- SQL editor with schema-aware autocomplete and syntax highlighting
+- Virtualized result grid at 60fps on 100,000 rows
+- NULL rendering visually distinct from empty strings
+- Inline row editing with side-by-side diff before commit
+- Query history searchable by SQL content with execution metadata
+- Command palette with fuzzy search over every action
+- Full keyboard navigation — no mouse required
+- Connection management with groups and `.env` import
+- Export to CSV and JSON
+- Copy row as INSERT, UPDATE, DELETE, or JSON statement
+- Dark and light themes with system preference detection
 
-The backend connection layer and query execution engine are in active development. SQLite support ships first. PostgreSQL with SSH tunnel support follows immediately after.
+### What is intentionally not in v1
+
+MySQL support. MongoDB. ERD diagrams. Query plan visualization. Stored procedure editing. Trigger management. Index management. Schema migration tools. Multi-database simultaneous connections. Plugin architecture. Charting. AI query suggestions.
+
+Every one of those is weeks of driver edge cases, type coercion variations, and platform-specific behavior that would dilute the UX quality of the core workflows. The project's competitive advantage is focus. Adding MySQL in v1 means dividing attention across two query engines with different type systems, collation rules, and SSL handshake behavior — and doing both at 80% quality instead of one at 95%.
 
 ---
 
-## Roadmap
+## Status
 
-**Phase 1 — SQLite Core (in progress):** Connection pooling, schema introspection, query execution with type coercion, transactional row editing, query history with full-text search.
+TableOpen is in active development. The architecture is fully designed and documented. The frontend shell, design system, typed IPC contract, component library, and state management are built. The SQLite backend connection layer and query execution engine are in progress. PostgreSQL support and SSH tunnels follow.
 
-**Phase 2 — PostgreSQL:** Full PostgreSQL support with SSL modes, SSH tunnels, schema browsing across multiple schemas, copy-as-statement generation.
-
-**Phase 3 — Polish:** Command palette, global keyboard shortcuts, resizable panels, column width persistence, export to CSV and JSON, `.env` file connection import.
-
-The v1 ships with PostgreSQL and SQLite only. MySQL, MongoDB, ERD diagrams, and plugin architecture are explicitly deferred. Serving every database type in v1 is how you end up with DBeaver — a tool that does everything and feels like nothing.
+This is not a finished product. It is a project with a clear architecture, a deliberate scope, and a quality bar that does not get negotiated down.
 
 ---
 
-## Why this can win
+## Why this can work
 
-The gap between DBeaver and TablePlus is enormous and universally acknowledged. Every developer who has used both knows it. No open-source project has filled it because the work is unglamorous — SSL connection modes, type coercion edge cases, SSH tunnel reliability, result set pagination. That work does not generate conference talks. It generates GitHub issues.
+The gap between DBeaver and TablePlus is universally acknowledged. Every developer who has used both knows exactly what I am describing. No open-source project has closed that gap because the work required is unglamorous — SSL certificate chains, PostgreSQL type coercion, SSH keep-alive behavior, result set pagination edge cases. That work does not produce conference talks. It produces GitHub issues.
 
-TableOpen wins by doing the unglamorous work with obsessive quality while maintaining the visual discipline that commercial tools use as a moat. The Immich analogy is precise: Immich did not beat Google Photos by having more features. It won by being open-source, self-hostable, and genuinely good at the core workflows. It has 55,000 GitHub stars. TableOpen has the same opportunity in database tooling — a category every developer touches daily where the best free option is objectively painful.
+TableOpen exists to do that work with the same obsessive quality that commercial tools use as a moat, plus the visual discipline that makes a developer reach for a tool every morning because it feels good to use, not because there is no alternative.
+
+The Immich analogy is precise. Immich did not beat Google Photos by having more features. It won by being open-source, self-hostable, and genuinely good at the core photo workflows. It has 55,000 GitHub stars. TableOpen has the same opportunity in database tooling — a category every developer touches daily, where the best free option is a Java application that launches in 6 seconds and looks like it was designed during the first Obama term.
 
 ---
 
 ## License
 
-MIT. No CLA. No contributor license agreement. No "Community Edition" vs "Pro." Everything is free, forever.
+MIT. No CLA. No contributor license agreement. No features gated behind a paid tier. Everything is free, forever.
