@@ -10,7 +10,7 @@ import { useUiStore } from "../../stores/ui-store";
 import { useAppKeyboardShortcuts } from "../../hooks/use-keyboard";
 
 export function AppShell() {
-  const { connections, activeConnectionId, addQueryTab } =
+  const { connections, activeConnectionId, addQueryTab, executeQuery } =
     useConnectionStore();
   const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUiStore();
 
@@ -31,24 +31,31 @@ export function AppShell() {
     }
   }, [activeConnectionId, activeTab]);
 
+  const handleExecuteQuery = useCallback(() => {
+    if (activeConnectionId && activeTab) {
+      executeQuery(activeConnectionId, activeTab.id, activeTab.content);
+    }
+  }, [activeConnectionId, activeTab, executeQuery]);
+
   const handleToggleSidebar = useCallback(() => {
     toggleSidebar();
   }, [toggleSidebar]);
 
   const handleNewConnection = useCallback(() => {
-    if (connections.length > 0) {
-      useConnectionStore.getState().disconnect(activeConnectionId!);
+    if (connections.length > 0 && activeConnectionId) {
+      useConnectionStore.getState().disconnect(activeConnectionId);
     }
   }, [activeConnectionId, connections.length]);
 
   const handleFocusEditor = useCallback(() => {
     const editorEl = document.querySelector("[data-monaco-editor]") as HTMLElement | null;
-    editorEl?.focus();
+    editorEl?.querySelector("textarea")?.focus();
   }, []);
 
   useAppKeyboardShortcuts({
     onNewQueryTab: handleNewQueryTab,
     onCloseQueryTab: handleCloseQueryTab,
+    onExecuteQuery: handleExecuteQuery,
     onToggleSidebar: handleToggleSidebar,
     onNewConnection: handleNewConnection,
     onFocusEditor: handleFocusEditor,

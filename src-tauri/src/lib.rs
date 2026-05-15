@@ -47,6 +47,7 @@ pub fn run() {
             commands::mutation_commands::delete_row,
             commands::mutation_commands::insert_row,
             commands::history_commands::get_history,
+            commands::history_commands::save_history,
             commands::history_commands::search_history,
             commands::export_commands::export_csv,
         ])

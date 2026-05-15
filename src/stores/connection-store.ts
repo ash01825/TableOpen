@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import type { ConnectionInfo, PgConfig, QueryResult } from "../types";
+import type { ConnectionInfo, PgConfig, QueryResult, HistoryEntry } from "../types";
 import * as commands from "../ipc/commands";
+import { useSchemaStore } from "./schema-store";
 
 export interface QueryTab {
   id: string;
@@ -79,6 +80,10 @@ function createInitialQueryTab(existingNums: number[]): QueryTab {
   };
 }
 
+function makeId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export const useConnectionStore = create<ConnectionState>((set, get) => ({
   connections: [],
   activeConnectionId: null,
@@ -105,6 +110,8 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
         loading: false,
         error: null,
       }));
+      // Load schema for the sidebar
+      useSchemaStore.getState().loadTables(connectionId);
       get().addRecentConnection(info);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -118,7 +125,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
 
   disconnect: async (connectionId: string) => {
     try {
-      await commands.disconnect({ connection_id: connectionId });
+      await commands.disconnect({ connectionId });
     } catch {
       // Proceed with local cleanup even if backend call fails
     }
@@ -302,11 +309,35 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     state.setQueryError(connectionId, tabId, null);
 
     try {
-      const result = await commands.executeQuery({ connection_id: connectionId, sql });
+      const result = await commands.executeQuery({ connectionId, sql });
       state.setQueryResults(connectionId, tabId, result);
+      // Fire-and-forget history save
+      const entry: HistoryEntry = {
+        id: makeId(),
+        connection_id: connectionId,
+        connection_name: conn.connectionInfo.name,
+        sql,
+        status: { type: "success" },
+        row_count: result.total_row_count ?? result.rows.length,
+        execution_time_ms: result.execution_time_ms,
+        created_at: new Date().toISOString(),
+      };
+      commands.saveHistory({ entry }).catch(() => {});
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       state.setQueryError(connectionId, tabId, message);
+      // Fire-and-forget history save with error
+      const entry: HistoryEntry = {
+        id: makeId(),
+        connection_id: connectionId,
+        connection_name: conn.connectionInfo.name,
+        sql,
+        status: { type: "error", message },
+        row_count: null,
+        execution_time_ms: null,
+        created_at: new Date().toISOString(),
+      };
+      commands.saveHistory({ entry }).catch(() => {});
     } finally {
       state.setQueryExecuting(connectionId, tabId, false);
     }

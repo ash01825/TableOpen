@@ -24,7 +24,7 @@ export const useSchemaStore = create<SchemaState>((set) => ({
   loadTables: async (connectionId: string) => {
     set({ loading: true, error: null });
     try {
-      const tables = await commands.getTables({ connection_id: connectionId });
+      const tables = await commands.getTables({ connectionId });
       set((state) => ({
         tables: { ...state.tables, [connectionId]: tables },
         loading: false,
@@ -38,7 +38,7 @@ export const useSchemaStore = create<SchemaState>((set) => ({
   loadColumns: async (connectionId: string, table: string) => {
     set({ loading: true, error: null });
     try {
-      const columns = await commands.getColumns({ connection_id: connectionId, table });
+      const columns = await commands.getColumns({ connectionId, table });
       const key = `${connectionId}:${table}`;
       set((state) => ({
         columns: { ...state.columns, [key]: columns },
@@ -53,7 +53,7 @@ export const useSchemaStore = create<SchemaState>((set) => ({
   loadPrimaryKeys: async (connectionId: string, table: string) => {
     set({ loading: true, error: null });
     try {
-      const pks = await commands.getPrimaryKeys({ connection_id: connectionId, table });
+      const pks = await commands.getPrimaryKeys({ connectionId, table });
       const key = `${connectionId}:${table}`;
       set((state) => ({
         primaryKeys: { ...state.primaryKeys, [key]: pks },

@@ -28,3 +28,14 @@ pub fn search_history(
     let entries = svc.search_history(&query)?;
     Ok(entries)
 }
+
+/// Save a query history entry (fire-and-forget from frontend).
+#[tauri::command]
+pub fn save_history(
+    history: State<'_, Mutex<HistoryService>>,
+    entry: HistoryEntry,
+) -> Result<(), String> {
+    let svc = history.lock().map_err(|e| AppError::General(e.to_string()))?;
+    svc.save(&entry).map_err(|e| e.to_string())?;
+    Ok(())
+}
