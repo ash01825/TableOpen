@@ -181,3 +181,6 @@ The Immich analogy is precise. Immich did not beat Google Photos by having more 
 ## License
 
 MIT. No CLA. No contributor license agreement. No features gated behind a paid tier. Everything is free, forever.
+
+Check the working here
+https://drive.google.com/file/d/13B_SN143MNpwvvTDM0b3PdloSGaUxlP8/view?usp=sharing
